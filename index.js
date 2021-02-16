@@ -1,5 +1,5 @@
 /*
- *  Copyright 2021 M.Satzinger <w.geronius@web.de>
+ * Copyright 2021 M.Satzinger <w.geronius@web.de>
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,10 +43,12 @@ module.exports = function (app) {
       ttn_account: {
         title: "ttn account name",
         type: "string",
+
       },
       ttn_device: {
         title: "device name",
         type: "string",
+
       },
       ttn_authKey: {
         title: "ttn Authorization Key",
@@ -57,7 +59,7 @@ module.exports = function (app) {
       },
       // TODO: eingabe mit ms prüfen, min 1000ms, max 604800000       
       ttn_period: {
-        title: "Age of dataset you wish to receive, (last entry is used) \r\n should exceed your device's send frequency (seconds, 1m, 1h, 1d ...)",
+        title: "Age of dataset you wish to receive - (last entry is used)  should exceed your device's send frequency (seconds, 1m, 1h, 1d ...)",
         type: "string",
         // enum: ['1m', '5m', '30m', '1h'],
         default: "5m",
@@ -125,18 +127,20 @@ module.exports = function (app) {
       var curl_cmd = curl_cmd1 + options.ttn_authKey + curl_cmd2;
       curl_cmd = curl_cmd + options.ttn_account + curl_cmd3;
       curl_cmd = curl_cmd + options.ttn_device + curl_cmd4;
-      curl_cmd = curl_cmd + '1h' + curl_cmd5;
+      curl_cmd = curl_cmd + '5m' + curl_cmd5;
       // curl_cmd = curl_cmd  + options.ttn_period  + curl_cmd5; should cover at least 2 entries
 
       var ttnData = spawn('sh', ['-c', curl_cmd]);
 
       ttnData.stdout.on('data', (data) => {
 
-        // TODO: JSON array holding more than one element will be deprived of leading '[' by sed, so add it here !
-        data = '[' + data;
+        if (! _.startsWith(data, '[')) { data = '[' + data};
+        if (! _.startsWith(data, '[{')) {
+          throw new Error('no valid data received')
+        }
         ttn_JSON = JSON.parse(data);
         var counter = 0;
-
+        
         // TODO: validate ttn_JSON fields
         var dewpoint = _.round((ttn_JSON[counter].dewpoint + 273.15), 2)
         var humidity = _.round(0.01 * ttn_JSON[counter].humidity, 2);

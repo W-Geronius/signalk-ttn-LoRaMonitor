@@ -1,5 +1,8 @@
 # local files
 my_*.txt
+# directories of runtime
+node_modules
+
 # Logs
 logs
 *.log
