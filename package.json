@@ -1,0 +1,31 @@
+{
+	"author": {
+		"name": "MCS",
+		"email": "w.geronius@web.de"
+	},
+	"bugs": {
+		"url": "W-Geronius/signalk-ttn-LoRaMonitor/issued"
+	},
+	"bundleDependencies": false,
+	"dependencies": {
+		"debug": "^2.2.0",
+		"lodash": "^3.10.1"
+	},
+	"deprecated": false,
+	"description": "Signal K Node Server Plugin to retrieve values from ttn",
+	"homepage": "https://W-Geronius/signalk-ttn-LoRaMonitor#readme",
+	"keywords": [
+		"signalk-node-server-plugin"
+	],
+	"license": "Apache-2.0",
+	"main": "index.js",
+	"name": "signalk-ttn-LoRaMonitor",
+	"repository": {
+		"type": "git",
+		"url": "git+https://github.com/W-Geronius/signalk-ttn-LoRaMonitor.git"
+	},
+	"scripts": {
+		"test": "echo \"Error: not implemented\" && exit 1"
+	},
+	"version": "0.1.0"
+}
