@@ -1,6 +1,6 @@
 {
 	"author": {
-		"name": "MCS",
+		"name": "M. Satzinger",
 		"email": "w.geronius@web.de"
 	},
 	"bugs": {
@@ -27,5 +27,5 @@
 	"scripts": {
 		"test": "echo \"Error: not implemented\" && exit 1"
 	},
-	"version": "0.1.0"
+	"version": "0.1.1"
 }

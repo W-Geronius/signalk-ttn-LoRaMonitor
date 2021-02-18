@@ -2,7 +2,7 @@
 Signal K Node Server Plugin to retrieve environment data from The Things Network (ttn)
 
 Build & deployment have not yet been setup  
-zero error handling has been implemented so far
+limited error handling has been implemented so far
 
 **Preliminary install instructions:**
 
