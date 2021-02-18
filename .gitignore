@@ -1,7 +1,9 @@
 # local files
 my_*.txt
+workspace.code-workspace
+
 # directories of runtime
-node_modules
+# node_modules
 
 # Logs
 logs
