@@ -12,19 +12,20 @@
  * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
  * See the License for the specific language governing permissions and
  * limitations under the License.
- * 
   
-   v.0.1.0   beta: inital working script
+   v.0.1.0   alpha: inital working script
+   v.0.1.1   alpha: error handling added
+   v.0.1.2   beta: paths restricted to valid SK schema names
 
-build NPM package:
+TODO: build NPM package
 https://www.stefanjudis.com/today-i-learned/npm-install-supports-local-packages/
 
 */
-
 const _ = require('lodash');
 const ms = require('ms');
 const debug = require('debug')('signalk-ttn-LoRaMonitor')
 const spawn = require('child_process').spawn;
+
 const curl_cmd1 = 'curl -s -X GET --header \'Accept: application/json\' --header \'Authorization: key ';
 const curl_cmd2 = '\' \'https://';
 const curl_cmd3 = '.data.thethingsnetwork.org/api/v2/query/';
@@ -33,6 +34,9 @@ const curl_cmd5 = '\' | sed \'s:},{:},\\r\\n{:g\' | tail -n 1';
 
 const msg_null = "No data available since server start";
 const msg_Data = "Data received as of ";
+const path_env = "environment.inside.";
+const path_bat = "electrical.batteries.";
+
 var Message = msg_null;
 
 module.exports = function (app) {
@@ -41,113 +45,90 @@ module.exports = function (app) {
   plugin.id = "signalk-ttn-LoRaMonitor";
   plugin.name = "ttn LoRa Monitoring";
   plugin.description = "Signal K Node Server Plugin to retrieve values from ttn";
-
-  // TODO rework & validate config entries
+  /*
+  *** description of config parms
+  */ 
   plugin.schema = {
     type: "object",
+    required: ['ttn_account', 'ttn_device', 'ttn_authKey', 'ttn_period', 'path_envInt', 'path_envExt', 'path_Batt'],
     description: "Make sure you have properly setup and checked your LoRa Device at thethingsnetwork.org",
     properties: {
       ttn_account: {
         title: "ttn account name",
         type: "string",
-
+        minLength: 2,
+        maxLength: 20,
       },
       ttn_device: {
         title: "device name",
         type: "string",
-
+        minLength: 2,
+        maxLength: 20,
       },
       ttn_authKey: {
         title: "ttn Authorization Key",
-        minLength: 50,
-        maxLength: 65,
         type: "string",
-        default: "ttn-account-v2.xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        default: "ttn-account-v2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
+        minLength: 58,
+        maxLength: 60
       },
-      // TODO: eingabe mit ms prüfen, min 1000ms, max 604800000       
       ttn_period: {
-        title: "Age of dataset you wish to receive - (last entry is used)  should exceed your device's send frequency (seconds, 1m, 1h, 1d ...)",
+        title: "Age of dataset you wish to retrieve - (first entry is used) --- should match your device's send frequency (seconds, 1m, 1h, 1d ...)",
         type: "string",
-        // enum: ['1m', '5m', '30m', '1h'],
+        pattern: '^[mhd0-9]*$',
         default: "5m",
       },
-
-      // TODO modify paths to device 1-12 char, SK path fixed
-      // https://github.com/SignalK/signalk-server/blob/master/SERVERPLUGINS.md#ui-schema
-
-      path_dewpoint: {
-        title: "SignalK Path for dewpoint (K)",
-        minLength: 20,
-        maxLength: 65,
+      path_envInt: {
+        title: "SignalK inside environment zone ID for data (boxed) --- Length: 1-12, valid characters: (a-z, A-Z, 0-9)",
+        minLength: 2,
+        maxLength: 12,
         type: "string",
-        default: "environment.inside.LoRa.dewPoint",
+        pattern: '^[a-zA-Z0-9]*$',
+        default: "LoRaBox",
       },
-      path_humidity: {
-        title: "SignalK Path for humidity (ratio)",
+      path_envExt: {
+        title: "SignalK inside environment zone ID for data --- Length: 1-12, valid characters: (a-z, A-Z, 0-9)",
+        minLength: 2,
+        maxLength: 12,
         type: "string",
-        default: "environment.inside.LoRa.relativeHumidity",
+        pattern: '^[a-zA-Z0-9]*$',
+        default: "LoRa",
       },
-      path_position: {
-        title: "SignalK Path for position",
+      path_batt: {
+        title: "SignalK Path battery zone ID for voltage --- Length: 1-12, valid characters: (a-z, A-Z, 0-9)",
+        minLength: 2,
+        maxLength: 12,
         type: "string",
-        default: "environment.inside.LoRa.position",
+        pattern: '^[a-zA-Z0-9]*$',
+        default: "service",
       },
-      path_pressure: {
-        title: "SignalK Path for pressure (Pa)",
-        type: "string",
-        default: "environment.inside.LoRa.pressure",
-      },
-      path_raw: {
-        title: "SignalK Path for sensor raw data (text)",
-        type: "string",
-        default: "environment.inside.LoRa.raw",
-      },
-      path_temp_ext: {
-        title: "SignalK Path for temperature external (K)",
-        type: "string",
-        default: "environment.inside.LoRaExt.temperature",
-      },
-      path_temperature: {
-        title: "SignalK Path for temperature (K)",
-        type: "string",
-        default: "environment.inside.LoRa.temperature",
-      },
-      path_timestamp: {
-        title: "SignalK Path for device timestamp",
-        type: "string",
-        default: "environment.inside.LoRa.timestamp",
-      },
-      path_voltage: {
-        title: "SignalK Path for voltage (V)",
-        type: "string",
-        default: "electrical.batteries.service.voltage",
-      }
     }
-  };
-
+  }
+  /*
+  *** Dashboard Status Message
+  */
   plugin.statusMessage = function () {
     return `${Message}`
   }
+  /*
+  *** Execution
+  */
   plugin.start = function (options) {
-
     function updateEnv() {
-      getTtnData();
+      getTtnData()
     }
 
     function getTtnData() {
 
-      // TODO: modify to get data by JS
-
-
       // method 1 via shell: 
-      // proper error handling check at \usr\lib\node_modules\signalk-server\node_modules\@signalk\set-system-time
+      // proper sh error handling check at \usr\lib\node_modules\signalk-server\node_modules\@signalk\set-system-time
       var curl_cmd = curl_cmd1 + options.ttn_authKey + curl_cmd2;
       curl_cmd = curl_cmd + options.ttn_account + curl_cmd3;
       curl_cmd = curl_cmd + options.ttn_device + curl_cmd4;
-      curl_cmd = curl_cmd + '1m' + curl_cmd5;
+      curl_cmd = curl_cmd + '15m' + curl_cmd5;
       // app.debug('issuing: ' + curl_cmd); 
 
-      // method 2 via js https request, preferred
+      // method 2 via js https request, preferred TODO:
       // https://nodejs.org/en/knowledge/HTTP/clients/how-to-create-a-HTTP-request/
 
       var ttnData = spawn('sh', ['-c', curl_cmd]);
@@ -173,22 +154,21 @@ module.exports = function (app) {
         var timestamp = ttn_JSON[counter].time;
         var voltage = ttn_JSON[counter].voltage;
 
-        Message = msg_Data + _.trunc(timestamp,22);
+        Message = msg_Data + _.trunc(timestamp, 22);
 
         app.handleMessage(plugin.id, {
           updates: [
             {
               '$source': 'ttn.' + options.ttn_device,
               values: [
-                { path: options.path_dewpoint, value: dewpoint },
-                { path: options.path_humidity, value: humidity },
-                { path: options.path_position, value: position },
-                { path: options.path_pressure, value: pressure },
-                { path: options.path_raw, value: raw },
-                { path: options.path_temp_ext, value: temp_ext },
-                { path: options.path_temperature, value: temperature },
-                { path: options.path_timestamp, value: timestamp },
-                { path: options.path_voltage, value: voltage }
+                { path: path_env + options.path_envInt + '.dewPoint', value: dewpoint },
+                { path: path_env + options.path_envInt + '.relativeHumidity', value: humidity },
+                { path: path_env + options.path_envExt + '.position', value: position },
+                { path: path_env + options.path_envExt + '.pressure', value: pressure },
+                { path: path_env + options.path_envInt + '.raw', value: raw },
+                { path: path_env + options.path_envExt + '.temperature', value: temp_ext },
+                { path: path_env + options.path_envExt + '.timestamp', value: timestamp },
+                { path: path_bat + options.path_batt + '.voltage', value: voltage }
               ]
             }
           ]
@@ -209,15 +189,17 @@ module.exports = function (app) {
     if (ms(options.ttn_period) > ms('7d')) {
       ms_period = ms('7d');
     } else {
-      if (ms(options.ttn_period) < 0) {
-        ms_period = 0
+      if (ms(options.ttn_period) < 60) {
+        ms_period = 60
       }
     }
 
     updateEnv();
     setInterval(updateEnv, ms_period);
   }
-
+  /*
+  *** Cleanup
+  */
   plugin.stop = function () {
     if (timer) {
       clearInterval(timer);
