@@ -9,7 +9,8 @@ v.0.1.2
 
 * create directory 'signalk-ttn-LoRaMonitor' in ~/.signalk/node_modules, copy code there  
 including the node_modules directory
-* copy signalk-ttn-LoRaMonitor.json to ~/.signalk/plugin-config-data
+* copy signalk-ttn-LoRaMonitor.json to ~/.signalk/plugin-config-data  
+* restart SignalK server
 
 If the plugin doesn't show up as 'ttn LoRa Monitoring' at the SignalK server's Plugin Config page, try following steps:
 
