@@ -16,24 +16,17 @@
   
    v.0.1.0   beta: inital working script
 
-build NPM package:
-https://www.stefanjudis.com/today-i-learned/npm-install-supports-local-packages/
 
-*/
+ */
 
 const _ = require('lodash');
 const ms = require('ms');
-const debug = require('debug')('signalk-ttn-LoRaMonitor')
 const spawn = require('child_process').spawn;
 const curl_cmd1 = 'curl -s -X GET --header \'Accept: application/json\' --header \'Authorization: key ';
 const curl_cmd2 = '\' \'https://';
 const curl_cmd3 = '.data.thethingsnetwork.org/api/v2/query/';
 const curl_cmd4 = '?last=';
 const curl_cmd5 = '\' | sed \'s:},{:},\\r\\n{:g\' | tail -n 1';
-
-const msg_null = "No data available since server start";
-const msg_Data = "Data received as of ";
-var Message = msg_null;
 
 module.exports = function (app) {
   var plugin = {};
@@ -42,7 +35,7 @@ module.exports = function (app) {
   plugin.name = "ttn LoRa Monitoring";
   plugin.description = "Signal K Node Server Plugin to retrieve values from ttn";
 
-  // TODO rework & validate config entries
+  // TODO validate entries
   plugin.schema = {
     type: "object",
     description: "Make sure you have properly setup and checked your LoRa Device at thethingsnetwork.org",
@@ -73,8 +66,6 @@ module.exports = function (app) {
       },
 
       // TODO modify paths to device 1-12 char, SK path fixed
-      // https://github.com/SignalK/signalk-server/blob/master/SERVERPLUGINS.md#ui-schema
-
       path_dewpoint: {
         title: "SignalK Path for dewpoint (K)",
         minLength: 20,
@@ -125,9 +116,7 @@ module.exports = function (app) {
     }
   };
 
-  plugin.statusMessage = function () {
-    return `${Message}`
-  }
+
   plugin.start = function (options) {
 
     function updateEnv() {
@@ -135,45 +124,33 @@ module.exports = function (app) {
     }
 
     function getTtnData() {
-
-      // TODO: modify to get data by JS
-
-
-      // method 1 via shell: 
-      // proper error handling check at \usr\lib\node_modules\signalk-server\node_modules\@signalk\set-system-time
       var curl_cmd = curl_cmd1 + options.ttn_authKey + curl_cmd2;
       curl_cmd = curl_cmd + options.ttn_account + curl_cmd3;
       curl_cmd = curl_cmd + options.ttn_device + curl_cmd4;
-      curl_cmd = curl_cmd + '1m' + curl_cmd5;
-      // app.debug('issuing: ' + curl_cmd); 
-
-      // method 2 via js https request, preferred
-      // https://nodejs.org/en/knowledge/HTTP/clients/how-to-create-a-HTTP-request/
+      curl_cmd = curl_cmd + '5m' + curl_cmd5;
+      // curl_cmd = curl_cmd  + options.ttn_period  + curl_cmd5; should cover at least 2 entries
 
       var ttnData = spawn('sh', ['-c', curl_cmd]);
+
       ttnData.stdout.on('data', (data) => {
 
-        app.debug(_.trunc(data, 50));
-
-        // app.setPluginError ('No data received, check if this state persists');
-        if (!_.startsWith(data, '[')) data = '[' + data;
-
+        if (! _.startsWith(data, '[')) { data = '[' + data};
+        if (! _.startsWith(data, '[{')) {
+          throw new Error('no valid data received')
+        }
         ttn_JSON = JSON.parse(data);
         var counter = 0;
+        
+        // TODO: validate ttn_JSON fields
         var dewpoint = _.round((ttn_JSON[counter].dewpoint + 273.15), 2)
-        if (dewpoint > 600) dewpoint = null;
         var humidity = _.round(0.01 * ttn_JSON[counter].humidity, 2);
         var position = ttn_JSON[counter].position;
         var pressure = 100 * ttn_JSON[counter].pressure;
         var raw = ttn_JSON[counter].raw;
         var temp_ext = _.round((ttn_JSON[counter].tempbattery + 273.15), 2);
-        if (temp_ext > 300) temp_ext = null;
         var temperature = _.round((ttn_JSON[counter].temperature + 273.15), 2);
-        if (temperature > 300) temperature = null;
         var timestamp = ttn_JSON[counter].time;
         var voltage = ttn_JSON[counter].voltage;
-
-        Message = msg_Data + _.trunc(timestamp,22);
 
         app.handleMessage(plugin.id, {
           updates: [
@@ -193,15 +170,14 @@ module.exports = function (app) {
             }
           ]
         })
-      }
-      )
+      })
 
       ttnData.on('error', (error) => {
-        app.error(error.toString('error error'));
+        console.error(error.toString());
       })
 
       ttnData.on('data', function (data) {
-        app.error(data.toString('data error'));
+        console.error(data.toString());
       })
     }
 
