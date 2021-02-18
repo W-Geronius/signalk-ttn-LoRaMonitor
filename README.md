@@ -15,7 +15,7 @@ including the node_modules directory
 If the plugin doesn't show up as 'ttn LoRa Monitoring' at the SignalK server's Plugin Config page, try following steps:
 
 * disconnect pi from internet  
-add '"signalk-ttn-LoRaMonitor": "^0.1.0",' as dependency in ~/.signalk/package.json  
+add '"signalk-ttn-LoRaMonitor": "^0.1.2",' as dependency in ~/.signalk/package.json  
 NB: this entry will disappear once the plugin is up and running with internet connected
 
 * configure & enable plugin within Signalk
