@@ -3,7 +3,7 @@ Signal K Node Server Plugin to retrieve environment data from The Things Network
 
 Build & deployment have not yet been setup  
 
-v.0.1.2
+v.0.2.0
 
 **Preliminary install instructions:**
 
