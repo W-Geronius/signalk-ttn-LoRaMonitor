@@ -4,7 +4,7 @@ Signal K Node Server Plugin to retrieve environment data from The Things Network
 This plugin has been developed to import data to SignalK as transmitted by the Open Boat Project's  [**'LoRa Boat Monitor'**](https://open-boat-projects.org/en/lora-bootsmonitor/ "click to read more")
 Presently this plugin only supports a single sensor to be placed on the vessel for remote monitoring.
 
-Further releases may be extended to support:
+Further releases may also support:
 
 * multiple devices (same payload data structure)
 * multiple devices (different payload data structures)
