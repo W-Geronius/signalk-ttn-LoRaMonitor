@@ -28,7 +28,7 @@ const _ = require('lodash');
 const ms = require('ms');
 const debug = require('debug')('signalk-ttn-LoRaMonitor');
 
-const msg_null = "No data available since server start";
+const msg_null = "Not started";
 const msg_Data = "Data received as of ";
 const path_env = "environment.inside.";
 const path_bat = "electrical.batteries.";
@@ -42,7 +42,7 @@ module.exports = function (app) {
 
   plugin.id = "signalk-ttn-LoRaMonitor";
   plugin.name = "ttn LoRa Monitoring";
-  plugin.description = "Signal K Node Server Plugin to retrieve values from ttn";
+  plugin.description = "Signal K Node Server Plugin to retrieve values from ttn v2";
   /*
   *** description of config parms
   *** minLength not working !
@@ -50,42 +50,47 @@ module.exports = function (app) {
   plugin.schema = {
     type: "object",
     required: ['ttn_account', 'ttn_device', 'ttn_authKey', 'ttn_period', 'path_envInt', 'path_envExt', 'path_Batt'],
-    description: "Make sure you have properly setup and checked your LoRa Device at thethingsnetwork.org",
+    description: "Make sure you have properly setup and checked your LoRa Device at thethingsnetwork.org (ttn)",
     properties: {
       // TTN account info      
       ttn_account: {
-        title: "ttn account name",
+        title: "Application ID",
+        description : "Application that your device is registered to at ttn --- Length: 1-20, valid characters: (a-z, _, -)",
         type: "string",
         default: "myAccount",
-        pattern: '^[a-zA-Z0-9_\-]+$',
+        pattern: '^[a-z0_\-]+$',
         minLength: 1,
         maxLength: 20,
       },
       ttn_device: {
-        title: "device name",
+        title: "Device name",
+        description : "Identifier for the device as registered at ttn  --- Length: 1-20, valid characters: (a-z, _, -)",
         type: "string",
         default: "myDevice",
-        pattern: '^[a-zA-Z0-9_\-]+$',
+        pattern: '^[a-z0_\-]+$',
         minLength: 1,
         maxLength: 20,
       },
       ttn_authKey: {
-        title: "ttn Authorization Key",
+        title: "ttn Access Key",
+        description : "Key to authenticate with application at ttn, something like this: ttn-account-v2.eiPq8mEeYRL_PNBZsOpPy-O3ABJXYWulODmQGR5PZzg",
         type: "string",
-        default: "ttn-account-v2xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx",
-        pattern: '^ttn-account-v2.[a-zA-Z0-9]+$',
+        default: "ttn-account-v2....",
+        pattern: '^ttn-account-v2\.[a-zA-Z0-9\-_\.]*$',
         minLength: 58,
         maxLength: 60
       },
       ttn_period: {
-        title: "Age of dataset you wish to retrieve - (first entry is used) --- should match your device's send frequency (e.g. 10s, 1m, 1h, 1d)",
+        title: "Data refresh frequency",
+        description: "Enter 30s for 30 seconds, 1m for 1 minute, 2d days ... min: 10s max: 7d" ,
         type: "string",
-        pattern: '^[smhd0-9]+$',
+        pattern: '^[1-9][0-9]?[smhd]$',
         default: "5m",
       },
       // SK path details
       path_envInt: {
-        title: "SignalK environment.inside instance ID for data (boxed) --- Length: 1-12, valid characters: (a-z, A-Z, 0-9)",
+        title: "SignalK environment.inside instance ID for data (boxed)",
+        description: "Length: 1-12, valid characters: (a-z, A-Z, 0-9)",
         minLength: 1,
         maxLength: 12,
         type: "string",
@@ -93,7 +98,8 @@ module.exports = function (app) {
         default: "LoRaBox",
       },
       path_envExt: {
-        title: "SignalK environment.inside instance ID for data --- Length: 1-12, valid characters: (a-z, A-Z, 0-9)",
+        title: "SignalK environment.inside instance ID for data",
+        description: "Length: 1-12, valid characters: (a-z, A-Z, 0-9)",        
         minLength: 1,
         maxLength: 12,
         type: "string",
@@ -101,7 +107,8 @@ module.exports = function (app) {
         default: "LoRa",
       },
       path_batt: {
-        title: "SignalK electrical.batteries instance ID for voltage --- Length: 1-12, valid characters: (a-z, A-Z, 0-9)",
+        title: "SignalK electrical.batteries instance ID for voltage",
+        description: "Length: 1-12, valid characters: (a-z, A-Z, 0-9)",        
         minLength: 1,
         maxLength: 12,
         type: "string",
@@ -125,11 +132,15 @@ module.exports = function (app) {
     }
 
     function getTtnData() {
+      var req_period = ms(options.ttn_period)
+      if (ms(options.ttn_period) > ms('7d')) req_period = ms('7d');
+      if (ms(options.ttn_period) < '10s') req_period = ms('10s');
+      if (req_period < ms('30m')) req_period += ms('5m');
 
       const https = require('https');
       var httpRequest = {
         hostname: options.ttn_account + '.data.thethingsnetwork.org',
-        path: '/api/v2/query/' + options.ttn_device + '?last=' + options.ttn_period,
+        path: '/api/v2/query/' + options.ttn_device + '?last=' + ms(req_period),
         headers: {
           Accept: 'application/json',
           Authorization: 'key ' + options.ttn_authKey
@@ -142,19 +153,22 @@ module.exports = function (app) {
         var result = '';
         response.on('data', function (chunk) { result += chunk });
         response.on('end', function () {
-          app.debug('\'' + result + '\'');
+          // app.debug('\'' + result + '\'');
           /*
           *** check for unexpected or incomplete results
           */
           {
+            result = _.trim(result);
             if (!_.startsWith(result, '[')) result = '[' + result;
-            if (!_.endsWith(_.trim(result), '}]' || !_.startsWith(result, '[{'))) {
+            if (!_.endsWith(result, '}]' || !_.startsWith(result, '[{'))) {
               if (lastValid !== undefined) {
                 app.setPluginError('invalid data received, latest valid at: ' + _.trunc(lastValid, 22))
               } else { app.setPluginError('invalid data received') }
               if (!_.isString(result)) { app.error('invalid : [' + result + ']') } else { app.error(' empty result') };
               return
             }
+            app.setPluginStatus('');
+            app.debug('\'' + result + '\'');
           }
           /*
           *** Parse, correct and convert fields to SK units
@@ -202,7 +216,7 @@ module.exports = function (app) {
         })
       }).on('error', () => {
         if (lastValid !== undefined) {
-          app.setPluginError('Internet error, latest valid at: ' + _.trunc(lastValid, 22))
+          app.setPluginError('Internet error, latest valid as of: ' + _.trunc(lastValid, 22))
         } else { app.setPluginError('Internet error') }
         return
       });
