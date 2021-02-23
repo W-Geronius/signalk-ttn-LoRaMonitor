@@ -20,7 +20,7 @@
 	],
 	"license": "Apache-2.0",
 	"main": "index.js",
-	"name": "signalk-ttn-loramonitor",
+	"name": "signalk-ttn-LoRaMonitor",
 	"repository": {
 		"type": "git",
 		"url": "git+https://github.com/W-Geronius/signalk-ttn-LoRaMonitor.git"
@@ -28,5 +28,5 @@
 	"scripts": {
 		"test": "echo \"Error: not implemented\" && exit 0"
 	},
-	"version": "0.2.2a"
+	"version": "0.2.2"
 }
