@@ -64,7 +64,7 @@ module.exports = function (app) {
       },
       ttn_device: {
         title: "Device name",
-        description : "Identifier for the device as registered at ttn  --- Length: 1-20, valid characters: (a-z, _, -)",
+        description : "Device ID as registered at ttn  --- Length: 1-20, valid characters: (a-z, _, -)",
         type: "string",
         default: "myDevice",
         pattern: '^[a-z0_\-]+$',
@@ -82,7 +82,7 @@ module.exports = function (app) {
       },
       ttn_period: {
         title: "Data refresh frequency",
-        description: "Enter 30s for 30 seconds, 1m for 1 minute, 2d days ... min: 10s max: 7d" ,
+        description: "Enter 30s for 30 seconds, 1m for 1 minute, 2d days ... min: '10s' max: '7d'" ,
         type: "string",
         pattern: '^[1-9][0-9]?[smhd]$',
         default: "5m",
@@ -132,15 +132,18 @@ module.exports = function (app) {
     }
 
     function getTtnData() {
-      var req_period = ms(options.ttn_period)
-      if (ms(options.ttn_period) > ms('7d')) req_period = ms('7d');
-      if (ms(options.ttn_period) < '10s') req_period = ms('10s');
-      if (req_period < ms('30m')) req_period += ms('5m');
+      /*
+      *** data age valid from 10 seconds to 7 days, should slightly exceed sensor transmit frequency
+      */
+      var request_period = ms(options.ttn_period)
+      if (ms(options.ttn_period) > ms('7d')) request_period = ms('7d');
+      if (ms(options.ttn_period) < '10s') request_period = ms('10s');
+      if (request_period < ms('30m')) request_period += ms('5m');
 
       const https = require('https');
       var httpRequest = {
         hostname: options.ttn_account + '.data.thethingsnetwork.org',
-        path: '/api/v2/query/' + options.ttn_device + '?last=' + ms(req_period),
+        path: '/api/v2/query/' + options.ttn_device + '?last=' + ms(request_period),
         headers: {
           Accept: 'application/json',
           Authorization: 'key ' + options.ttn_authKey
@@ -221,13 +224,15 @@ module.exports = function (app) {
         return
       });
     }
-    {   // timer valid from 10 seconds to 7 days
-      var ms_period = ms(options.ttn_period)
-      if (ms(options.ttn_period) > ms('7d')) ms_period = ms('7d');
-      if (ms(options.ttn_period) < '10s') ms_period = ms('10s');
+    { /*
+      *** timer plugin refreh valid from 10 seconds to 7 days
+      */
+      var plugin_period = ms(options.ttn_period)
+      if (ms(options.ttn_period) > ms('7d')) plugin_period = ms('7d');
+      if (ms(options.ttn_period) < '10s') plugin_period = ms('10s');
     }
     updateEnv();
-    setInterval(updateEnv, ms_period);
+    setInterval(updateEnv, plugin_period);
   }
   /*
   *** Cleanup
