@@ -5,6 +5,7 @@ node_modules
 workspace.code-workspace
 signalk-ttn-LoRaMonitor.json
 .gitignore
+.git
 
 # Logs
 logs
