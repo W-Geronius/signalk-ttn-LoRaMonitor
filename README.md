@@ -10,9 +10,9 @@ Further releases may also support:
 * multiple devices (different payload data structures)
 * user definable payload definitions to be decoded at client side
 
-**Build & deployment have not been setup so far --- the project is considered as 'beta'**
+** The project is considered as 'beta' **
 
-Current version: v.0.2.2
+Current version: v.0.2.2a
 
 PR welcome. 
 To discuss, please visit german [**Segeln-Forum.de**](https://www.segeln-forum.de/board194-boot-technik/board195-open-boat-projects-org/74840-lora-monitoring-und-alarmserver/#post2124488), posting in english is accepted
