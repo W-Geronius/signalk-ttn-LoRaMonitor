@@ -4,18 +4,19 @@
 		"email": "w.geronius@web.de"
 	},
 	"bugs": {
-		"url": "W-Geronius/signalk-ttn-LoRaMonitor/issued"
+		"url": "https://W-Geronius/signalk-ttn-LoRaMonitor/issues"
 	},
 	"bundleDependencies": false,
 	"dependencies": {
-		"debug": "^2.2.0",
-		"lodash": "^3.10.1"
+		"debug": "^2.6.9",
+		"lodash": "^4.17.21",
+		"ms": "^2.1.2"
 	},
 	"deprecated": false,
-	"description": "Signal K Node Server Plugin to retrieve values from ttn",
+	"description": "Signal K Node Server Plugin to retrieve OBP LoRa monitor values from ttn",
 	"homepage": "https://W-Geronius/signalk-ttn-LoRaMonitor#readme",
 	"keywords": [
-		"signalk-node-server-plugin"
+		"OBP LoRa Boatmonitor"
 	],
 	"license": "Apache-2.0",
 	"main": "index.js",
@@ -25,7 +26,7 @@
 		"url": "git+https://github.com/W-Geronius/signalk-ttn-LoRaMonitor.git"
 	},
 	"scripts": {
-		"test": "echo \"Error: not implemented\" && exit 1"
+		"test": "echo \"Error: not implemented\" && exit 0"
 	},
 	"version": "0.2.2"
 }
