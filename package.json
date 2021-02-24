@@ -10,7 +10,7 @@
 	"dependencies": {
 		"debug": "^2.6.9",
 		"lodash": "^4.17.21",
-		"ms": "^2.1.2"
+		"ms": "^2.1.3"
 	},
 	"deprecated": false,
 	"description": "Signal K Node Server Plugin to retrieve OBP LoRa monitor values from ttn",
@@ -28,5 +28,5 @@
 	"scripts": {
 		"test": "echo \"Error: not implemented\" && exit 0"
 	},
-	"version": "0.2.2b"
+	"version": "0.2.2c"
 }
