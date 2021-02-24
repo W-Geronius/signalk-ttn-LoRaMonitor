@@ -21,6 +21,7 @@
    v.0.2.2   beta: available via NPM
 
 */
+const { notDeepEqual } = require('assert');
 const _ = require('lodash');
 const ms = require('ms');
 const debug = require('debug')('signalk-ttn-LoRaMonitor');
