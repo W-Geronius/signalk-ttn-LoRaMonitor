@@ -12,7 +12,7 @@ Further releases may also support:
 
 **The project is considered as 'beta'**
 
-Current version: v.0.2.2a
+Current version: v.0.2.2b
 
 PR welcome. 
 To discuss, please visit german [**Segeln-Forum.de**](https://www.segeln-forum.de/board194-boot-technik/board195-open-boat-projects-org/74840-lora-monitoring-und-alarmserver/#post2124488), posting in english is accepted

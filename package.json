@@ -16,7 +16,7 @@
 	"description": "Signal K Node Server Plugin to retrieve OBP LoRa monitor values from ttn",
 	"homepage": "https://W-Geronius/signalk-ttn-LoRaMonitor#readme",
 	"keywords": [
-		"OBP LoRa Boatmonitor"
+		"signalk-node-server-plugin"
 	],
 	"license": "Apache-2.0",
 	"main": "index.js",
@@ -28,5 +28,5 @@
 	"scripts": {
 		"test": "echo \"Error: not implemented\" && exit 0"
 	},
-	"version": "0.2.2a"
+	"version": "0.2.2b"
 }

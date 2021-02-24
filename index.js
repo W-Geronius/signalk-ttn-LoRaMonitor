@@ -18,12 +18,9 @@
    v.0.1.2   beta: paths restricted to valid SK schema names
    v.0.2.0   beta: get data via http.get, minor fixes
    v.0.2.1   beta: improved error handling, extended options validation
-
-TODO: build NPM package
-https://www.stefanjudis.com/today-i-learned/npm-install-supports-local-packages/
+   v.0.2.2   beta: available via NPM
 
 */
-const { notDeepEqual } = require('assert');
 const _ = require('lodash');
 const ms = require('ms');
 const debug = require('debug')('signalk-ttn-LoRaMonitor');
