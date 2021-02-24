@@ -12,21 +12,7 @@ Further releases may also support:
 
 **The project is considered as 'beta'**
 
-Current version: v.0.2.2b
+Current version: v.0.2.2
 
 PR welcome. 
 To discuss, please visit german [**Segeln-Forum.de**](https://www.segeln-forum.de/board194-boot-technik/board195-open-boat-projects-org/74840-lora-monitoring-und-alarmserver/#post2124488), posting in english is accepted
-
-**Preliminary install instructions:**
-
-* create directory 'signalk-ttn-LoRaMonitor' in ~/.signalk/node_modules, copy code there  
-including the node_modules directory
-* copy signalk-ttn-LoRaMonitor.json to ~/.signalk/plugin-config-data
-* configure & enable plugin within Signalk
-* enjoy and report issues!
-
-> If the plugin doesn't show up as 'ttn LoRa Monitoring' at the SignalK server's Plugin Config page, try following steps:
-> * disconnect pi from internet  
-> add '"signalk-ttn-LoRaMonitor": "^0.1.0",' as dependency in ~/.signalk/package.json  
-> This entry will disappear once the plugin is up and running with internet connected
-
