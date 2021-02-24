@@ -188,10 +188,13 @@ module.exports = function (app) {
             var temperature = _.round((ttn_JSON[counter].temperature + 273.15), 2);
             if (temperature > 300) temperature = null;
             var timestamp = ttn_JSON[counter].time;
-            if (_.isString(timestamp)) { lastValid = timestamp }
+            if (_.isString(timestamp)) { 
+              lastValid = timestamp;
+              Message = msg_Data + timestamp
+            }
             var voltage = ttn_JSON[counter].voltage;
             voltage += 1
-            Message = msg_Data + _.trunc(timestamp, 22);
+            
           }
           /*
           *** assemble delta
