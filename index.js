@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
   
-   v.0.1.0   alpha: inital working script
-   v.0.1.1   alpha: error handling added
-   v.0.1.2   beta: paths restricted to valid SK schema names
-   v.0.2.0   beta: get data via http.get, minor fixes
-   v.0.2.1   beta: improved error handling, extended options validation
-   v.0.2.2   beta: available via NPM
+   v.0.1.0  alpha: inital working script
+   v.0.1.1  alpha: error handling added
+   v.0.1.2  beta: paths restricted to valid SK schema names
+   v.0.2.0  beta: get data via http.get, minor fixes
+   v.0.2.1  beta: improved error handling, extended options validation
+   v.0.2.2  beta: available via NPM
+   v.0.3.0  err, nice date, metadata to sensors path, process last JSON entry
 
 */
 const { notDeepEqual } = require('assert');
@@ -27,7 +28,7 @@ const ms = require('ms');
 const debug = require('debug')('signalk-ttn-LoRaMonitor');
 
 const msg_null = "Not started";
-const msg_Data = "Data received as of ";
+const msg_Data = "Last seen ";
 const path_env = "environment.inside.";
 const path_bat = "electrical.batteries.";
 
@@ -131,7 +132,7 @@ module.exports = function (app) {
 
     function getTtnData() {
       /*
-      *** data age valid from 10 seconds to 7 days, should slightly exceed sensor transmit frequency
+      *** data age valid from 10 seconds to 7 days, best to slightly exceed sensor transmit frequency
       */
       var request_period = ms(options.ttn_period)
       if (ms(options.ttn_period) > ms('7d')) request_period = ms('7d');
@@ -163,7 +164,7 @@ module.exports = function (app) {
             if (!_.startsWith(result, '[')) result = '[' + result;
             if (!_.endsWith(result, '}]' || !_.startsWith(result, '[{'))) {
               if (lastValid !== undefined) {
-                app.setPluginError('invalid data received, latest valid at: ' + _.trunc(lastValid, 22))
+                app.setPluginError(`invalid data received, last seen: ${lastValid}`)
               } else { app.setPluginError('invalid data received') }
               if (!_.isString(result)) { app.error('invalid : [' + result + ']') } else { app.error(' empty result') };
               return
@@ -176,7 +177,7 @@ module.exports = function (app) {
           */
           {
             ttn_JSON = JSON.parse(result);
-            var counter = 0;
+            var counter = ttn_JSON.length-1;
             var dewpoint = _.round((ttn_JSON[counter].dewpoint + 273.15), 2)
             if (dewpoint > 600) dewpoint = null;
             var humidity = _.round(0.01 * ttn_JSON[counter].humidity, 2);
@@ -190,11 +191,10 @@ module.exports = function (app) {
             var timestamp = ttn_JSON[counter].time;
             if (_.isString(timestamp)) { 
               lastValid = timestamp;
-              Message = msg_Data + timestamp
+              lastValid = new Date( ttn_JSON[counter].time).toString().replace(/T/, ' ').replace(/\..+/, '').substr(4, 20)
+              Message = msg_Data + lastValid
             }
-            var voltage = ttn_JSON[counter].voltage;
-            voltage += 1
-            
+            var voltage = ttn_JSON[counter].voltage - 0.92;           // temporary fix monitor measurement bug
           }
           /*
           *** assemble delta
@@ -218,10 +218,10 @@ module.exports = function (app) {
             ]
           })
         })
-      }).on('error', () => {
+      }).on('error', (err) => {
         if (lastValid !== undefined) {
-          app.setPluginError('Internet error, latest valid as of: ' + _.trunc(lastValid, 22))
-        } else { app.setPluginError('Internet error') }
+          app.setPluginError(`${err}, last seen: ${lastValid}`, 22)
+        } else { app.setPluginError(`Internet error: ${err}`)}
         return
       });
     }
